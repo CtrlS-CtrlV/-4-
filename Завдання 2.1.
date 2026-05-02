@@ -1,0 +1,37 @@
+import threading
+import time
+import random
+
+class SafeBankAccount:
+    def __init__(self, balance: float = 0.0):
+        self.balance = balance
+        self.transaction_count = 0
+        self._lock = threading.Lock()
+
+    def deposit(self, amount: float):
+        with self._lock:
+            current = self.balance
+            time.sleep(0.0001) # Форсуємо race condition
+            self.balance = current + amount
+            self.transaction_count += 1
+
+    def withdraw(self, amount: float):
+        with self._lock:
+            if self.balance >= amount:
+                current = self.balance
+                time.sleep(0.0001)
+                self.balance = current - amount
+                self.transaction_count += 1
+
+def run_test(account_class, initial_balance):
+    acc = account_class(initial_balance)
+    threads = []
+    for _ in range(10):
+        threads.append(threading.Thread(target=lambda: [acc.deposit(10) for _ in range(50)]))
+        threads.append(threading.Thread(target=lambda: [acc.withdraw(10) for _ in range(50)]))
+    
+    for t in threads: t.start()
+    for t in threads: t.join()
+    return acc.balance
+
+# (У звіті порівняйте SafeBankAccount з BankAccount з умови задачі)
