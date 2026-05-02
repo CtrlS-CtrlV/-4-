@@ -1,0 +1,22 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+
+def risky_task(value: int) -> float:
+    if value == 0: raise ZeroDivisionError("Ділення на нуль!")
+    return 100 / value
+
+def handle_exceptions():
+    values = [10, 0, 5, -1]
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = {executor.submit(risky_task, v): v for v in values}
+        
+        for future in as_completed(futures):
+            v = futures[future]
+            try:
+                result = future.result()
+                print(f"Результат для {v}: {result}")
+            except Exception as e:
+                print(f"Помилка для значення {v}: {e}")
+
+if __name__ == "__main__":
+    handle_exceptions()
